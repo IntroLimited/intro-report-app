@@ -198,7 +198,7 @@ print("OK")
     try: os.unlink(tmp_in); os.unlink(tmp_out)
     except: pass
 
-class Handler(BaseHTTPRequestHandler):
+class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = self.path.split('?')[0]
         if path == '/api/roles':
