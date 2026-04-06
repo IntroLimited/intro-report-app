@@ -91,8 +91,16 @@ def get_candidate_data(page):
     full_name = "".join(t.get("plain_text","") for t in name_prop.get("title",[])).strip()
     notes = rt("Notes")
     def section(notes, header):
-        m = re.search(rf'{header}\s*\n(.*?)(?=\n[A-Z][A-Z ]+\n|$)', notes, re.DOTALL|re.IGNORECASE)
-        return m.group(1).strip() if m else ""
+        # Try multiple patterns to handle different formatting
+        patterns = [
+            rf'{header}\s*\n+(.*?)(?=\n+(?:STRONG POINTS|POTENTIAL CHALLENGES|COMPENSATION|BASICS)\s*\n|$)',
+            rf'{header}\s+(.*?)(?=(?:STRONG POINTS|POTENTIAL CHALLENGES|COMPENSATION|BASICS)\s|$)',
+        ]
+        for pattern in patterns:
+            m = re.search(pattern, notes, re.DOTALL|re.IGNORECASE)
+            if m and m.group(1).strip():
+                return m.group(1).strip()
+        return ""
     return {
         "full_name": full_name, "location": ms("Current Location"),
         "linkedin": url("LinkedIn"), "stage": status("Stage"),
