@@ -1,9 +1,8 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/roles.py", "use": "@vercel/python" },
-    { "src": "api/report.py", "use": "@vercel/python" },
-    { "src": "public/index.html", "use": "@vercel/static" }
+    { "src": "api/*.py", "use": "@vercel/python" },
+    { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/roles", "dest": "/api/roles.py" },
