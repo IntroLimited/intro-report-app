@@ -237,7 +237,7 @@ class Handler(BaseHTTPRequestHandler):
                 role_folder_id = find_folder(token, client_folders[0]["id"], role)
 if not role_folder_id: return self._json(404,{'error':f'Role folder "{role}" not found inside "{client}".'})
 
-reports_folder_id = find_folder(token, role_folder_id, "Reports & Profiles")
+reports_folder_id = find_folder(token, role_folder_id, "Reports and Profiles")
 search_folder_id = reports_folder_id if reports_folder_id else role_folder_id
 
 pres = find_presentation(token, search_folder_id)
