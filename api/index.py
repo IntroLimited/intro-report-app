@@ -91,16 +91,26 @@ def get_candidate_data(page):
     full_name = "".join(t.get("plain_text","") for t in name_prop.get("title",[])).strip()
     notes = rt("Notes")
     def section(notes, header):
-        # Try multiple patterns to handle different formatting
-        patterns = [
-            rf'{header}\s*\n+(.*?)(?=\n+(?:STRONG POINTS|POTENTIAL CHALLENGES|COMPENSATION|BASICS)\s*\n|$)',
-            rf'{header}\s+(.*?)(?=(?:STRONG POINTS|POTENTIAL CHALLENGES|COMPENSATION|BASICS)\s|$)',
-        ]
-        for pattern in patterns:
-            m = re.search(pattern, notes, re.DOTALL|re.IGNORECASE)
-            if m and m.group(1).strip():
-                return m.group(1).strip()
-        return ""
+        # Find the header position (case insensitive)
+        upper = notes.upper()
+        header_upper = header.upper()
+        start = upper.find(header_upper)
+        if start == -1:
+            return ""
+        # Move past the header
+        start = start + len(header_upper)
+        # Find the next known header after this one
+        remaining = notes[start:]
+        remaining_upper = remaining.upper()
+        next_headers = ["STRONG POINTS", "POTENTIAL CHALLENGES", "COMPENSATION", "BASICS"]
+        next_pos = len(remaining)
+        for h in next_headers:
+            if h == header_upper:
+                continue
+            pos = remaining_upper.find(h)
+            if pos != -1 and pos < next_pos:
+                next_pos = pos
+        return remaining[:next_pos].strip()
     return {
         "full_name": full_name, "location": ms("Current Location"),
         "linkedin": url("LinkedIn"), "stage": status("Stage"),
