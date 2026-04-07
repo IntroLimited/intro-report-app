@@ -1,4 +1,4 @@
-import json
+ import json
 import os
 import re
 import subprocess
@@ -80,6 +80,34 @@ def find_notion_candidate(candidate_name):
         pass
     return None, None
 
+def extract_section(notes, header):
+    """Extract a section from notes text. Headers may be inline or on their own line."""
+    upper = notes.upper()
+    header_upper = header.upper()
+    # Find the header
+    pos = upper.find(header_upper)
+    if pos == -1:
+        return ""
+    # Start after the header
+    start = pos + len(header_upper)
+    remaining = notes[start:]
+    remaining_upper = remaining.upper()
+    # Find where next section begins
+    other_headers = ["STRONG POINTS", "POTENTIAL CHALLENGES", "COMPENSATION", "BASICS"]
+    next_pos = len(remaining)
+    for h in other_headers:
+        if h == header_upper:
+            continue
+        idx = remaining_upper.find(h)
+        if idx != -1:
+            # Walk back to find the newline before this header
+            walk = idx
+            while walk > 0 and remaining_upper[walk-1] in (' ', '\n', '\r'):
+                walk -= 1
+            if walk < next_pos:
+                next_pos = walk
+    return remaining[:next_pos].strip()
+
 def get_candidate_data(page):
     props = page.get("properties", {})
     def rt(k): return "".join(t.get("plain_text","") for t in props.get(k,{}).get("rich_text",[]))
@@ -90,31 +118,15 @@ def get_candidate_data(page):
     name_prop = (props.get("\ufeffName") or props.get("Name", {}))
     full_name = "".join(t.get("plain_text","") for t in name_prop.get("title",[])).strip()
     notes = rt("Notes")
-    def section(notes, header):
-        import re as _re
-        upper = notes.upper()
-        header_upper = header.upper()
-        # Find this header
-       m = _re.search(r'(?:^|\n)\s*' + _re.escape(header_upper), upper)
-        if not m:
-            return ""
-        start = m.end()
-        remaining = notes[start:]
-        remaining_upper = remaining.upper()
-        next_headers = ["STRONG POINTS", "POTENTIAL CHALLENGES", "COMPENSATION", "BASICS"]
-        next_pos = len(remaining)
-        for h in next_headers:
-            if h == header_upper:
-                continue
-            nm = _re.search(r'\n\s*' + _re.escape(h), remaining_upper)
-            if nm and nm.start() < next_pos:
-                next_pos = nm.start()
-        return remaining[:next_pos].strip()
     return {
-        "full_name": full_name, "location": ms("Current Location"),
-        "linkedin": url("LinkedIn"), "stage": status("Stage"),
-        "basics": section(notes,"BASICS"), "strong_points": section(notes,"STRONG POINTS"),
-        "potential_challenges": section(notes,"POTENTIAL CHALLENGES"), "compensation": section(notes,"COMPENSATION")
+        "full_name": full_name,
+        "location": ms("Current Location"),
+        "linkedin": url("LinkedIn"),
+        "stage": status("Stage"),
+        "basics": extract_section(notes, "BASICS"),
+        "strong_points": extract_section(notes, "STRONG POINTS"),
+        "potential_challenges": extract_section(notes, "POTENTIAL CHALLENGES"),
+        "compensation": extract_section(notes, "COMPENSATION")
     }
 
 def find_folder(token, parent_id, name):
@@ -130,8 +142,10 @@ def find_presentation(token, folder_id):
     return files[0] if files else None
 
 def build_report(token, pres_id, candidate):
-    # Download PPTX
-    req = urllib.request.Request(f"https://www.googleapis.com/drive/v3/files/{pres_id}/export?mimeType=application/vnd.openxmlformats-officedocument.presentationml.presentation", headers={"Authorization": f"Bearer {token}"})
+    req = urllib.request.Request(
+        f"https://www.googleapis.com/drive/v3/files/{pres_id}/export?mimeType=application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Authorization": f"Bearer {token}"}
+    )
     with urllib.request.urlopen(req) as resp:
         pptx_bytes = resp.read()
 
@@ -258,7 +272,7 @@ class handler(BaseHTTPRequestHandler):
                 search_folder_id = reports_folder_id if reports_folder_id else role_folder_id
 
                 pres = find_presentation(token, search_folder_id)
-                if not pres: return self._json(404,{'error':f'No presentation found in "{client} → {role}".'})
+                if not pres: return self._json(404,{'error':f'No presentation found in "{client} -> {role}".'})
 
                 build_report(token, pres["id"], candidate)
                 self._json(200,{'success':True,'deck_url':pres.get("webViewLink","")})
