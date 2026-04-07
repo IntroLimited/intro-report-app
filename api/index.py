@@ -91,15 +91,14 @@ def get_candidate_data(page):
     full_name = "".join(t.get("plain_text","") for t in name_prop.get("title",[])).strip()
     notes = rt("Notes")
     def section(notes, header):
-        # Find the header position (case insensitive)
+        import re as _re
         upper = notes.upper()
         header_upper = header.upper()
-        start = upper.find(header_upper)
-        if start == -1:
+        # Find this header
+        m = _re.search(r'(?:^|\n)\s*' + re.escape(header_upper), upper)
+        if not m:
             return ""
-        # Move past the header
-        start = start + len(header_upper)
-        # Find the next known header after this one
+        start = m.end()
         remaining = notes[start:]
         remaining_upper = remaining.upper()
         next_headers = ["STRONG POINTS", "POTENTIAL CHALLENGES", "COMPENSATION", "BASICS"]
@@ -107,9 +106,9 @@ def get_candidate_data(page):
         for h in next_headers:
             if h == header_upper:
                 continue
-            pos = remaining_upper.find(h)
-            if pos != -1 and pos < next_pos:
-                next_pos = pos
+            nm = _re.search(r'\n\s*' + re.escape(h), remaining_upper)
+            if nm and nm.start() < next_pos:
+                next_pos = nm.start()
         return remaining[:next_pos].strip()
     return {
         "full_name": full_name, "location": ms("Current Location"),
