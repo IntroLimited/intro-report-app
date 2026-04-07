@@ -106,7 +106,7 @@ def get_candidate_data(page):
         for h in next_headers:
             if h == header_upper:
                 continue
-            nm = _re.search(r'\n\s*' + re.escape(h), remaining_upper)
+            nm = _re.search(r'\n\s*' + _re.escape(h), remaining_upper)
             if nm and nm.start() < next_pos:
                 next_pos = nm.start()
         return remaining[:next_pos].strip()
