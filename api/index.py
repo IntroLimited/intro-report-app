@@ -95,7 +95,7 @@ def get_candidate_data(page):
         upper = notes.upper()
         header_upper = header.upper()
         # Find this header
-        m = _re.search(r'(?:^|\n)\s*' + re.escape(header_upper), upper)
+       m = _re.search(r'(?:^|\n)\s*' + _re.escape(header_upper), upper)
         if not m:
             return ""
         start = m.end()
