@@ -49,8 +49,15 @@ def get_live_roles():
             client_prop = props.get("Client", {})
             client_select = client_prop.get("select")
             client_name = client_select.get("name", "").strip() if client_select else ""
-            if role_name and client_name:
-                roles.append({"client": client_name, "role": role_name})
+ if role_name:
+                if " - " in role_name:
+                    parts = role_name.split(" - ", 1)
+                    client = parts[0].strip()
+                    role = parts[1].strip()
+                else:
+                    client = client_name
+                    role = role_name
+                roles.append({"client": client, "role": role, "display": role_name})
         if not data.get("has_more"):
             break
         cursor = data.get("next_cursor")
