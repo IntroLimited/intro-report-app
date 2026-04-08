@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intro — Report Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #0a0a0a; --white: #f5f3ef; --stone: #c8c2b4;
+      --accent: #8b6f47; --green: #4a7c59; --border: rgba(255,255,255,0.08);
+    }
+    html, body { background: var(--black); color: var(--white); font-family: 'Cormorant Garamond', Georgia, serif; min-height: 100vh; }
+    body { display: flex; flex-direction: column; align-items: center; padding: 3rem 1.5rem 5rem; }
+    body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(139,111,71,0.05) 0%, transparent 60%); pointer-events: none; }
+    .container { width: 100%; max-width: 620px; position: relative; z-index: 1; }
+    header { margin-bottom: 2.5rem; text-align: center; }
+    .wordmark { font-size: 0.65rem; font-family: 'DM Mono', monospace; letter-spacing: 0.35em; text-transform: uppercase; color: var(--stone); margin-bottom: 1.25rem; }
+    h1 { font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 300; }
+    h1 em { font-style: italic; color: var(--accent); }
+    .subtitle { margin-top: 0.6rem; font-size: 0.95rem; color: var(--stone); font-style: italic; }
+    .rule { width: 36px; height: 1px; background: var(--accent); margin: 2rem auto; opacity: 0.4; }
+    .card { background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: 2px; padding: 2.25rem; }
+    .field { margin-bottom: 1.6rem; }
+    label { display: block; font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--stone); margin-bottom: 0.55rem; }
+    input[type="text"], select { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 1px; padding: 0.75rem 1rem; font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; color: var(--white); outline: none; transition: border-color 0.2s; -webkit-appearance: none; appearance: none; }
+    input[type="text"]::placeholder { color: rgba(200,194,180,0.3); font-style: italic; }
+    input[type="text"]:focus, select:focus { border-color: rgba(139,111,71,0.45); }
+    .select-wrap { position: relative; }
+    .select-wrap::after { content: '↓'; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--stone); font-size: 0.8rem; pointer-events: none; font-family: 'DM Mono', monospace; }
+    select { cursor: pointer; padding-right: 2.5rem; }
+    select option { background: #1a1714; color: var(--white); }
+    select:disabled { opacity: 0.4; cursor: not-allowed; }
+    .section-label { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(200,194,180,0.35); margin-bottom: 1.25rem; }
+    .btn { width: 100%; padding: 1rem; background: var(--accent); border: none; border-radius: 1px; font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.25em; text-transform: uppercase; color: #0a0a0a; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem; }
+    .btn:hover:not(:disabled) { background: #9d7f55; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-secondary { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--stone); margin-top: 0.75rem; font-size: 0.62rem; }
+    .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.04); color: var(--white); }
+    .status { margin-top: 1.25rem; padding: 0.9rem 1.1rem; border-radius: 1px; font-size: 0.9rem; line-height: 1.6; display: none; }
+    .status.visible { display: block; }
+    .status.processing { background: rgba(139,111,71,0.07); border: 1px solid rgba(139,111,71,0.18); color: var(--stone); font-style: italic; }
+    .status.success { background: rgba(74,124,89,0.08); border: 1px solid rgba(74,124,89,0.25); color: #7fba94; }
+    .status.error { background: rgba(139,58,58,0.08); border: 1px solid rgba(139,58,58,0.25); color: #c07878; }
+    .loading-roles { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--stone); opacity: 0.6; font-style: italic; padding: 0.75rem 1rem; }
+    .spinner { display: inline-block; width: 12px; height: 12px; border: 1px solid rgba(139,111,71,0.25); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.75s linear infinite; vertical-align: middle; margin-right: 0.5rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .link-btn { display: inline-block; margin-top: 0.5rem; font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(139,111,71,0.3); padding-bottom: 1px; }
+    .link-btn:hover { border-color: var(--accent); }
+    footer { margin-top: 3rem; text-align: center; font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(200,194,180,0.18); }
+    @media (max-width: 520px) { body { padding: 2rem 1rem 4rem; } .card { padding: 1.5rem 1.25rem; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <p class="wordmark">Intro Limited</p>
+      <h1>Report <em>Builder</em></h1>
+      <p class="subtitle">Generate a candidate slide in Google Slides.</p>
+    </header>
+    <div class="rule"></div>
+    <div class="card">
+      <p class="section-label">Candidate</p>
+
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="candidateName" placeholder="e.g. Torreon Everett Meredith" />
+      </div>
+
+      <div class="field">
+        <label>Active Search</label>
+        <div class="select-wrap">
+          <select id="roleSelect" disabled>
+            <option value="">Loading active searches…</option>
+          </select>
+        </div>
+        <div id="loadingRoles" class="loading-roles" style="display:none">
+          <span class="spinner"></span> Loading from Notion…
+        </div>
+      </div>
+
+      <button class="btn" id="submitBtn" onclick="submitReport()" disabled>
+        Generate Report
+      </button>
+
+      <button class="btn btn-secondary" onclick="loadRoles()">
+        ↺ Refresh Searches
+      </button>
+
+      <div class="status" id="status"></div>
+    </div>
+    <footer>Intro Limited &nbsp;·&nbsp; Internal Tool</footer>
+  </div>
+
+  <script>
+    async function loadRoles() {
+      const select = document.getElementById('roleSelect');
+      const btn = document.getElementById('submitBtn');
+      select.disabled = true;
+      select.innerHTML = '<option value="">Loading…</option>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/roles');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load searches');
+
+        select.innerHTML = '<option value="">Select an active search…</option>';
+        data.roles.forEach(function(r) {
+          var opt = document.createElement('option');
+          opt.value = JSON.stringify({ client: r.client, role: r.role });
+          opt.textContent = r.display || r.role;
+          select.appendChild(opt);
+        });
+        select.disabled = false;
+        btn.disabled = false;
+      } catch(err) {
+        select.innerHTML = '<option value="">Failed to load — try refreshing</option>';
+        setStatus('error', '✗ Could not load active searches: ' + err.message);
+      }
+    }
+
+    function setStatus(type, html) {
+      var el = document.getElementById('status');
+      el.className = 'status visible ' + type;
+      el.innerHTML = html;
+    }
+
+    async function submitReport() {
+      var name = document.getElementById('candidateName').value.trim();
+      var roleVal = document.getElementById('roleSelect').value;
+      var btn = document.getElementById('submitBtn');
+
+      if (!name) { setStatus('error', 'Please enter the candidate\'s full name.'); return; }
+      if (!roleVal) { setStatus('error', 'Please select an active search.'); return; }
+
+      var selected = JSON.parse(roleVal);
+      btn.disabled = true;
+      btn.textContent = 'Generating…';
+      setStatus('processing', '<span class="spinner"></span> Pulling candidate data from Notion and building the slide… this may take a minute.');
+
+      try {
+        var res = await fetch('/api/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            candidate_name: name,
+            client: selected.client,
+            role: selected.role
+          })
+        });
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+
+        setStatus('success', '✓ Report slide created for <strong>' + name + '</strong> in <strong>' + selected.client + ' — ' + selected.role + '</strong><br><br><a class="link-btn" href="' + data.deck_url + '" target="_blank">Open deck in Google Slides ↗</a>');
+      } catch(err) {
+        setStatus('error', '✗ ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Report';
+      }
+    }
+
+    // Load roles on page load
+    loadRoles();
+  </script>
+</body>
+</html>
